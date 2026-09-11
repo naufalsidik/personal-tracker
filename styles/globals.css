@@ -1,9 +1,21 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /* Font dimuat di pages/_document.js, bukan lewat @import di sini.
    @import memblokir render sampai berkasnya selesai diunduh. */
+
+/* Reset minimal, pengganti Preflight Tailwind. Tailwind sendiri sudah
+   dilepas (K1) — nol utility class-nya kepakai di seluruh pages/components,
+   cuma Preflight yang diam-diam masih menopang beberapa hal. Baris di
+   bawah ini persis yang ternyata disandarkan sebelumnya: garis bawah link
+   (tokens.css & .papan .dd a), vertical-align ikon SVG inline, list-style
+   pada <ul>/<ol>, dan background tombol transparan. */
+*, *::before, *::after { box-sizing: border-box; border-width: 0; border-style: solid; }
+html { line-height: 1.5; -webkit-text-size-adjust: 100%; }
+h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: inherit; }
+a { color: inherit; text-decoration: inherit; }
+button { background: transparent; cursor: pointer; }
+button, input, select, textarea { font-family: inherit; font-size: inherit; }
+ul, ol { list-style: none; margin: 0; padding: 0; }
+img, svg { display: block; vertical-align: middle; max-width: 100%; }
+input::placeholder, textarea::placeholder { opacity: 1; }
 
 /* ==========================================================================
    Kelas warisan money tracker.

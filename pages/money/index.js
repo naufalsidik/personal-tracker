@@ -178,8 +178,14 @@ export default function Home() {
     try {
       const res = await fetch('/api/money/sheets-list')
       const json = await res.json()
-      setAvailableSheets(json.sheets || [])
-      return json
+      // res.ok tidak dicek: fetch cuma throw kalau gagal jaringan, bukan
+      // kalau server balas error (500 dsb). Tanpa fallback ini, respons
+      // error (yang bentuknya { error: '...' }, tanpa sheets/current)
+      // bikin sheets jadi undefined dan halaman ini crash.
+      const sheets = json.sheets || []
+      const current = json.current || null
+      setAvailableSheets(sheets)
+      return { sheets, current }
     } catch { return { sheets: [], current: null } }
   }, [])
 
