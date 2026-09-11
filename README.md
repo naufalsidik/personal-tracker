@@ -1,88 +1,87 @@
-# Money Tracker
+# Personal Tracker
 
-Web app untuk catatan keuangan personal yang terhubung ke Google Sheets, dengan analisis AI menggunakan Claude.
+Dasbor pribadi buat catatan keuangan dan lamaran kerja. Proyek satu orang,
+dipakai sendiri setiap hari, di belakang login.
 
-## Setup & Deploy
+## Modul
 
-### 1. Upload ke GitHub
-- Buat repo baru di github.com (**private**)
-- Upload semua file ini ke repo tersebut
+- **Keuangan** — pemasukan, pengeluaran (variable & tetap), tabungan yang
+  nyambung ke target, dompet dengan saldo yang dihitung dari transaksi,
+  transfer antar dompet, dan transaksi rutin bulanan.
+- **Lamaran kerja** — papan tunggu lamaran kerja.
 
-### 2. Setup Google Sheets
-- Buat Google Sheet baru dengan struktur yang dijelaskan di bagian bawah
-- Buat service account di [Google Cloud Console](https://console.cloud.google.com):
-  - Enable "Google Sheets API"
-  - IAM & Admin → Service Accounts → Create
-  - Download JSON key file
-- Share Google Sheet ke email service account (`xxx@xxx.iam.gserviceaccount.com`) dengan role **Editor**
-- Catat Spreadsheet ID (ada di URL: `docs.google.com/spreadsheets/d/<ID>/edit`)
+Modul baru bisa ditambah lewat `lib/modules.js` tanpa menyentuh sidebar atau
+halaman home; lihat komentar di file itu.
 
-### 3. Deploy ke Vercel
-- Buka vercel.com, login dengan GitHub
-- Klik "Add New Project", pilih repo money-tracker
-- Sebelum deploy, tambahkan Environment Variables:
+## Stack
 
-| Variable | Value | Cara dapat |
-|---|---|---|
-| `SPREADSHEET_ID` | ID Google Sheet kamu | Dari URL sheet |
-| `GOOGLE_SERVICE_ACCOUNT_JSON` | Seluruh isi JSON service account (copy-paste) | File JSON yang didownload |
-| `ANTHROPIC_API_KEY` | API key dari console.anthropic.com | Daftar di [console.anthropic.com](https://console.anthropic.com) |
-| `SESSION_SECRET` | Random string min 32 karakter | Generate dengan `openssl rand -hex 32` |
-| `AUTH_USERNAME` | Username login kamu | Bebas |
-| `AUTH_PIN` | PIN numerik untuk login | Bebas |
+- Next.js 16, Pages Router (bukan App Router)
+- React 19, Recharts 3
+- Neon Postgres serverless (region `ap-southeast-1`)
+- iron-session untuk autentikasi
+- CSS custom properties + styled-jsx untuk styling
 
-- Klik Deploy
+Detail arsitektur dan aturan domain lengkap ada di [`CLAUDE.md`](CLAUDE.md).
+Aturan desain visual ada di [`docs/design-spec.md`](docs/design-spec.md).
 
-### 4. Test deployment
-- Buka URL Vercel
-- Login dengan `AUTH_USERNAME` dan `AUTH_PIN` yang kamu set
-- Kalau sheet Januari (atau bulan current) kosong, akan muncul pesan "Tidak ada data ditemukan"
+## Setup
 
-## Struktur Sheet yang Diperlukan
+### 1. Database
 
-Setiap sheet merepresentasikan satu periode (dari tanggal 20 suatu bulan sampai 19 bulan berikutnya).
+Buat project di [Neon](https://neon.tech), region `ap-southeast-1` (atau
+region lain, sesuaikan). Ambil connection string yang **pooled**, bentuknya:
 
-**Nama sheet:** nama bulan dalam bahasa Indonesia (`Januari`, `Februari`, `Maret`, dst)
+```
+postgresql://user:password@ep-xxx-pooler.region.aws.neon.tech/neondb?sslmode=require
+```
 
-**Kolom yang digunakan:**
+Tabel dan view (`wallets`, `wallet_balances`, `variable_expenses`, `incomes`,
+`fixed_costs`, `savings`, `saving_goals`, `wallet_transfers`, `recurring`,
+`recurring_applied`, dan tabel modul Lamaran) dibuat langsung di database,
+bukan lewat migration file di repo ini. Kalau mulai dari database kosong,
+sql schema-nya belum ada tempat resminya — tanya pemilik proyek.
 
-| Kolom | Data | Keterangan |
-|---|---|---|
-| B-E (row 2-60) | Tanggal, Deskripsi, Kategori, Jumlah | Pengeluaran variable |
-| G-I (row 3-10) | Tanggal, Deskripsi, Jumlah | Pemasukan |
-| K-P (row 2-32) | Tanggal, Jumlah, Wajar, Selisih, Sisa, Avg Expense | Rekap harian (formula) |
-| H-I (row 26-35) | Komponen, Jumlah | Saving/tabungan (optional) |
+### 2. Environment variables
 
-Sheet baru bisa dibuat lewat tombol "Buat Sheet" di aplikasi, yang akan meng-duplicate sheet sebelumnya.
+Copy `.env.example` ke `.env.local`, isi:
 
-## Security Notes
+| Variable | Isinya |
+|---|---|
+| `DATABASE_URL` | Connection string Neon (pooled) |
+| `SESSION_SECRET` | String random, minimal 32 karakter (`openssl rand -hex 32`) |
+| `AUTH_USERNAME` | Username login |
+| `AUTH_PIN` | PIN login |
 
-- Rate limiter login: 5 percobaan per 15 menit, lockout 30 menit
-- Session cookie: HttpOnly, SameSite=strict, Secure (di production)
-- Password compared menggunakan constant-time comparison
-- Rate limiter menggunakan in-memory store; di Vercel serverless ini bisa reset saat cold start. Untuk use case personal sudah cukup, tapi untuk keamanan lebih ketat pertimbangkan migrasi ke Vercel KV.
-- **Jangan commit file service account JSON ke git.** File `.gitignore` sudah memblokir pattern umum.
-
-## Local Development
+### 3. Local development
 
 ```bash
-# Install dependencies
 npm install
-
-# Buat file .env.local dengan variabel di atas
-cp .env.example .env.local
-
-# Run development server
 npm run dev
 ```
 
-## Tech Stack
+### 4. Deploy
 
-- Next.js 14 (Pages Router)
-- React 18
-- Tailwind CSS
-- iron-session (session management)
-- googleapis (Google Sheets integration)
-- @anthropic-ai/sdk (AI analysis)
-- recharts (visualization)
-- react-markdown (safe markdown rendering)
+Deploy manual dari `main` ke Vercel. Set environment variables yang sama di
+atas di Vercel project settings sebelum deploy pertama.
+
+**Selalu `npm run build` sebelum push.** `npm run dev` lebih longgar dan
+meloloskan hal yang bikin deploy Vercel gagal.
+
+## Aturan yang tidak boleh dilanggar
+
+Lengkapnya di [`CLAUDE.md`](CLAUDE.md), inti pentingnya:
+
+- Saldo dompet selalu dihitung dari transaksi lewat view `wallet_balances`,
+  tidak pernah disimpan sebagai kolom.
+- Nominal disimpan sebagai BIGINT dalam rupiah penuh, tanpa desimal.
+- Periode keuangan berjalan tanggal 20 sampai 19, mengikuti tanggal gajian.
+
+## Security notes
+
+- Rate limiter login: 5 percobaan per 15 menit, lockout 30 menit. Disimpan
+  in-memory, jadi reset saat cold start Vercel — cukup untuk pemakaian
+  pribadi, bukan pertahanan serius terhadap penyerang yang determinasi.
+- Session cookie: HttpOnly, SameSite=strict, Secure di production.
+- Perbandingan PIN login pakai `crypto.timingSafeEqual`.
+- Origin header dicek di setiap API route sebagai lapisan tambahan
+  terhadap CSRF, selain SameSite cookie.
