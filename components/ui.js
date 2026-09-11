@@ -34,31 +34,6 @@ export function Kartu({ children, rapat = false, ...sisa }) {
   )
 }
 
-export function KepalaKartu({ ikon, judul, aksi }) {
-  return (
-    <header className="kepala">
-      {ikon && <span className="ikon">{ikon}</span>}
-      <h3 className="judul">{judul}</h3>
-      {aksi && <div className="aksi">{aksi}</div>}
-      <style jsx>{`
-        .kepala {
-          display: flex; align-items: center; gap: var(--space-2);
-          margin-bottom: var(--space-4);
-        }
-        .ikon { display: inline-flex; color: var(--accent); }
-        .judul {
-          font-family: var(--font-body);
-          font-size: var(--text-md);
-          font-weight: 600;
-          letter-spacing: normal;
-          color: var(--ink);
-        }
-        .aksi { margin-left: auto; display: flex; gap: var(--space-2); }
-      `}</style>
-    </header>
-  )
-}
-
 /* ------------------------------------------------------------------ */
 /* Judul section — duduk di kanvas, di luar kartu.                     */
 /* Tidak pernah berwarna semantik.                                     */

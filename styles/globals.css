@@ -20,12 +20,6 @@
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-.card {
-  background: var(--surface);
-  border: var(--border-width) solid var(--border);
-  border-radius: var(--radius-md);
-}
-
 /* Tanpa !important. Aturan ini sudah menang atas preflight Tailwind
    karena urutannya lebih akhir, dan komponen tetap bisa menimpanya
    saat perlu — sebelumnya tidak bisa. */
@@ -43,48 +37,6 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 input::placeholder, textarea::placeholder { color: var(--muted); }
 select option { background: var(--surface); color: var(--ink); }
 
-.btn-primary {
-  background: var(--solid);
-  color: var(--on-solid);
-  font-weight: 600;
-  border: var(--border-width) solid var(--solid);
-  border-radius: var(--radius-sm);
-  padding: 10px 20px;
-  min-height: 44px;
-  transition: opacity var(--dur-fast) var(--ease);
-  cursor: pointer;
-}
-.btn-primary:hover { opacity: .88; }
-.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
-
-.btn-ghost {
-  background: transparent;
-  color: var(--ink-2);
-  border: var(--border-width) solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px 20px;
-  min-height: 44px;
-  transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
-  cursor: pointer;
-}
-.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-
-.tab-active { color: var(--accent); border-bottom: 2px solid var(--accent); }
-.tab-inactive { color: var(--muted); border-bottom: 2px solid transparent; }
-
-.tag {
-  font-size: var(--text-2xs);
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  font-weight: 500;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.fade-in { animation: fadeIn var(--dur-slow) var(--ease) forwards; }
-
 .spinner {
   width: 20px; height: 20px;
   border: 2px solid var(--border);
@@ -93,16 +45,6 @@ select option { background: var(--surface); color: var(--ink); }
   animation: spin .7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-
-.analysis-markdown { font-size: var(--text-sm); line-height: 1.8; color: var(--ink-2); }
-.analysis-markdown strong { color: var(--accent); font-weight: 600; }
-.analysis-markdown p { margin-bottom: var(--space-3); }
-.analysis-markdown ol, .analysis-markdown ul { margin-left: var(--space-5); margin-bottom: var(--space-3); }
-.analysis-markdown li { margin-bottom: var(--space-1); }
-.analysis-markdown h1, .analysis-markdown h2, .analysis-markdown h3 {
-  color: var(--ink); font-weight: 600;
-  margin-top: var(--space-4); margin-bottom: var(--space-2);
-}
 
 /* ==========================================================================
    Kerangka halaman modul Money

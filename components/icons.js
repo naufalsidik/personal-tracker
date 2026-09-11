@@ -65,14 +65,6 @@ export const IkonMataTutup = p => (
   </svg>
 )
 
-export const IkonLembarBaru = p => (
-  <svg {...dasar} {...p}>
-    <path d="M13 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8z" />
-    <path d="M13 3v5h5" />
-    <path d="M12 11.5v5M9.5 14h5" />
-  </svg>
-)
-
 export const IkonUlang = p => (
   <svg {...dasar} {...p}>
     <path d="M20 11.5A8 8 0 0 0 6.3 6.3L4 8.5" />

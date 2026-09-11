@@ -139,18 +139,6 @@ export default function Home() {
     } catch { alert('Error.') }
   }
 
-  // Dipakai di tabel transaksi. Nama dompet ditampilkan sebagai baris kecil
-  // di bawah deskripsi, bukan kolom tersendiri — tabel Pemasukan dan Tabungan
-  // tidak punya header, jadi menambah kolom berarti membongkar tiga tabel.
-  const NamaDompet = ({ id }) => {
-    const w = (data?.wallets || []).find(x => x.id === id)
-    return (
-      <span style={{ display: 'block', fontSize: 'var(--text-2xs)', color: 'var(--muted)', marginTop: 2 }}>
-        {w ? w.nama : 'tanpa dompet'}
-      </span>
-    )
-  }
-
   const PilihDompet = () => (
     <select
       aria-label="Dompet"
@@ -462,7 +450,7 @@ export default function Home() {
 					editForm={editForm} setEditForm={setEditForm}
 					editSaving={editSaving}
 					handleSaveEdit={handleSaveEdit} handleDelete={handleDelete}
-					NamaDompet={NamaDompet} PilihDompet={PilihDompet}
+					PilihDompet={PilihDompet}
 					VAR_CATEGORIES={VAR_CATEGORIES} CATEGORY_COLORS={CATEGORY_COLORS}
 				/>
 			)}

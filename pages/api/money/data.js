@@ -195,7 +195,6 @@ async function handler(req, res) {
     const goalRows = await sql`
       select id, component from saving_goals where aktif = true order by component
     `
-    const savingGoals = goalRows.map(r => r.component)
     const savingGoalsList = goalRows.map(r => ({ id: Number(r.id), component: r.component }))
 
     // Dompet aktif dikirim bersama data periode supaya form tambah
@@ -215,7 +214,6 @@ async function handler(req, res) {
       income,
       fixedCost,
       saving,
-	  savingGoals,
 	  savingGoalsList,
 	  wallets,
       rekap,

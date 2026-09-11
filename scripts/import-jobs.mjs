@@ -1,5 +1,5 @@
 // Impor sekali dari data/applications.json ke Neon.
-// Jalankan dari root money-tracker:
+// Jalankan dari root proyek:
 //   node --env-file=.env.local scripts/import-jobs.mjs "C:\path\ke\applications.json"
 //
 // Aman diulang: baris yang sudah ada dilewati, bukan digandakan.
