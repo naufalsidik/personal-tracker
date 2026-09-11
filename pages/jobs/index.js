@@ -3,6 +3,7 @@ import Shell from '../../components/Shell'
 import { api } from '../../lib/api-client'
 import { JENIS_LAMARAN as JENIS, TEMPAT_LAMARAN as TEMPAT, STATUS_LAMARAN as STATUS } from '../../lib/constants'
 import { SELESAI, hariSejak, sisaHari, perluAksi } from '../../lib/jobs-client'
+import { fmtTanggal as fmt } from '../../lib/format'
 
 const DIRESPONS = ['Screening', 'Interview', 'Offer', 'Rejected']
 const SKALA_MIN = 21
@@ -11,12 +12,6 @@ const KOSONG = {
   perusahaan: '', jabatan: '', lokasi: '', tanggalApply: '', deadline: '',
   jenis: 'Tetap', tempat: 'WFO', status: 'Applied',
   referensi: '', url: '', gaji: '', catatan: '',
-}
-
-function fmt(d) {
-  if (!d) return '—'
-  const t = new Date(d + 'T00:00:00')
-  return isNaN(t) ? d : t.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 // Garis tunggu punya dua arti tergantung status.

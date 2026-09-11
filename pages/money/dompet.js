@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import Shell from '../../components/Shell'
 import MoneyNav from '../../components/MoneyNav'
 import { Kartu, Metrik } from '../../components/ui'
-import { rp, fmtTanggal as fmt } from '../../lib/format'
+import { rp as rpAsli, maskRp, fmtTanggal as fmt } from '../../lib/format'
 import { api } from '../../lib/api-client'
+import { useSembunyikanNominal } from '../../lib/useSembunyikanNominal'
+import ToggleNominal from '../../components/money/ToggleNominal'
 
 const KOSONG_DOMPET = {
   nama: '', jenis: 'Rekening', saldoAwal: '',
@@ -15,6 +17,8 @@ export default function Dompet() {
   const [data, setData] = useState(null)
   const [draf, setDraf] = useState(null)
   const [galat, setGalat] = useState('')
+  const [sembunyi, toggleSembunyi] = useSembunyikanNominal()
+  const rp = n => sembunyi ? maskRp() : rpAsli(n)
 
   const muat = useCallback(async () => {
     try { setData(await api('/api/money/wallets')) }
@@ -60,6 +64,7 @@ export default function Dompet() {
             </p>
           </div>
           <div className="aksi">
+            <ToggleNominal sembunyi={sembunyi} onToggle={toggleSembunyi} />
             <button className="btn solid" onClick={() => setDraf({ ...KOSONG_DOMPET })}>
               Tambah dompet
             </button>

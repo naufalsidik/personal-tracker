@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import Shell from '../../components/Shell'
 import MoneyNav from '../../components/MoneyNav'
-import { rp, fmtTanggal } from '../../lib/format'
+import { rp as rpAsli, maskRp, fmtTanggal } from '../../lib/format'
 import { api } from '../../lib/api-client'
+import { useSembunyikanNominal } from '../../lib/useSembunyikanNominal'
+import ToggleNominal from '../../components/money/ToggleNominal'
 
 const KOSONG = { component: '', target: '', deadline: '', catatan: '', aktif: true }
 
@@ -21,6 +23,8 @@ export default function Target() {
   const [data, setData] = useState(null)
   const [draf, setDraf] = useState(null)
   const [galat, setGalat] = useState('')
+  const [sembunyi, toggleSembunyi] = useSembunyikanNominal()
+  const rp = n => sembunyi ? maskRp() : rpAsli(n)
 
   const muat = useCallback(async () => {
     try { setData(await api('/api/money/saving-goals')) }
@@ -66,6 +70,7 @@ export default function Target() {
             </p>
           </div>
           <div className="aksi">
+            <ToggleNominal sembunyi={sembunyi} onToggle={toggleSembunyi} />
             <button className="btn solid" onClick={() => setDraf({ ...KOSONG })}>
               Tambah target
             </button>

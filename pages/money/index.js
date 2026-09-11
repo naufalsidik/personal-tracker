@@ -4,7 +4,8 @@ import {
   LineChart, Line, CartesianGrid, Legend
 } from 'recharts'
 import Shell from '../../components/Shell'
-import { IkonMata, IkonMataTutup, IkonUnduh } from '../../components/icons'
+import { IkonUnduh } from '../../components/icons'
+import ToggleNominal from '../../components/money/ToggleNominal'
 import { VAR_CATEGORIES, CATEGORY_COLORS } from '../../lib/constants'
 import { FIXED_ITEMS } from '../../lib/validation'
 import MoneyNav from '../../components/MoneyNav'
@@ -12,15 +13,8 @@ import { useRouter } from 'next/router'
 import DaftarTransaksi from '../../components/money/DaftarTransaksi'
 import DasborMoney from '../../components/money/DasborMoney'
 import TambahTransaksi from '../../components/money/TambahTransaksi'
-
-function formatRp(num) {
-  if (!num) return 'Rp0'
-  return 'Rp' + Number(num).toLocaleString('id-ID')
-}
-
-function maskRp() {
-  return 'Rp•••••'
-}
+import { rp as formatRp, maskRp } from '../../lib/format'
+import { useSembunyikanNominal } from '../../lib/useSembunyikanNominal'
 
 function todayFormatted() {
   const d = new Date()
@@ -68,23 +62,7 @@ export default function Home() {
   const [availableSheets, setAvailableSheets] = useState([])
   const [selectedSheet, setSelectedSheet] = useState('')
   const [selectedYear, setSelectedYear] = useState(null)
-  const [hideNominal, setHideNominal] = useState(false)
-
-  // Load hide preference dari localStorage saat mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('mt_hide_nominal')
-      if (saved === '1') setHideNominal(true)
-    } catch {}
-  }, [])
-
-  function toggleHide() {
-    const next = !hideNominal
-    setHideNominal(next)
-    try {
-      localStorage.setItem('mt_hide_nominal', next ? '1' : '0')
-    } catch {}
-  }
+  const [hideNominal, toggleHide] = useSembunyikanNominal()
 
   // Helper: tampilkan nominal atau masked tergantung state
   const showRp = (num) => hideNominal ? maskRp() : formatRp(num)
@@ -107,6 +85,7 @@ export default function Home() {
   const [editingRow, setEditingRow] = useState(null)
   const [editForm, setEditForm] = useState({})
   const [editSaving, setEditSaving] = useState(false)
+  const [galatTransaksi, setGalatTransaksi] = useState('')
 
   function resetForm() {
     setFormData(f => ({
@@ -133,9 +112,9 @@ export default function Home() {
       if (res.ok) fetchData(selectedSheet, selectedYear)
       else {
         const err = await res.json()
-        alert('Gagal menghapus: ' + (err.error || 'coba lagi'))
+        setGalatTransaksi('Gagal menghapus: ' + (err.error || 'coba lagi'))
       }
-    } catch { alert('Error.') }
+    } catch { setGalatTransaksi('Error.') }
   }
 
   const PilihDompet = () => (
@@ -163,9 +142,9 @@ export default function Home() {
       if (res.ok) { setEditingRow(null); fetchData(selectedSheet, selectedYear) }
       else {
         const err = await res.json()
-        alert('Gagal menyimpan: ' + (err.error || 'coba lagi'))
+        setGalatTransaksi('Gagal menyimpan: ' + (err.error || 'coba lagi'))
       }
-    } catch { alert('Error.') }
+    } catch { setGalatTransaksi('Error.') }
     setEditSaving(false)
   }
 
@@ -338,28 +317,20 @@ export default function Home() {
   const selisih = totalIncome - totalExpense - totalSaving
 
   return (
-    <Shell title="Money Tracker">
+    <Shell title="Keuangan">
       <div className="hal">
  
         {/* Header */}
         <header className="kepala">
           <div className="kepala-in">
             <div>
-              <h1>Money Tracker</h1>
+              <h1>Keuangan</h1>
               {data && <p className="sub">{data.period}</p>}
             </div>
  
             <div className="alat">
-              <button
-                className="ico kotak"
-                onClick={toggleHide}
-                aria-label={hideNominal ? 'Tampilkan nominal' : 'Sembunyikan nominal'}
-                aria-pressed={hideNominal}
-                title={hideNominal ? 'Tampilkan nominal' : 'Sembunyikan nominal'}
-              >
-                {hideNominal ? <IkonMataTutup /> : <IkonMata />}
-              </button>
- 
+              <ToggleNominal sembunyi={hideNominal} onToggle={toggleHide} />
+
               {selectedSheet && (
                 <a
                   className="btn"
@@ -448,6 +419,13 @@ export default function Home() {
                 
               {/* TRANSACTIONS */}
 			  {tab === 'transactions' && (
+				<>
+				{galatTransaksi && (
+					<div className="galat" role="alert">
+						{galatTransaksi}
+						<button className="ico" onClick={() => setGalatTransaksi('')} aria-label="Tutup">✕</button>
+					</div>
+				)}
 				<DaftarTransaksi
 					data={data}
 					rp={formatRp}
@@ -458,6 +436,7 @@ export default function Home() {
 					PilihDompet={PilihDompet}
 					VAR_CATEGORIES={VAR_CATEGORIES} CATEGORY_COLORS={CATEGORY_COLORS}
 				/>
+				</>
 			)}
             </>
           )}
@@ -475,14 +454,7 @@ export default function Home() {
           gap: var(--space-6) var(--space-8); flex-wrap: wrap;
         }
         .alat { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
- 
-        /* Tombol mata perlu bentuk persegi, jadi menimpa .ico yang memanjang. */
-        .alat :global(.ico.kotak) {
-          width: 36px; height: 36px; padding: 0;
-          border: var(--border-width) solid var(--border);
-        }
-        .alat :global(.ico.kotak:hover) { border-color: var(--border-strong); }
- 
+
         .bulan {
           width: auto; min-height: 36px;
           padding: 0 var(--space-3);
