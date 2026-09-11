@@ -109,6 +109,7 @@ export default function Home() {
     component: '',
     item: '',
 	walletId: '',
+	goalId: '',
   })
   const [submitting, setSubmitting] = useState(false)
   const [submitMsg, setSubmitMsg] = useState('')
@@ -125,6 +126,7 @@ export default function Home() {
       component: '',
       item: '',
       walletId: f.walletId,
+      goalId: '',
     }))
   }
 
@@ -241,7 +243,10 @@ export default function Home() {
     } else if (apiType === 'income') {
       payload = { date: formData.date, description: formData.description, amount: formData.amount, walletId: formData.walletId }
     } else if (apiType === 'saving') {
-      payload = { component: formData.component, amount: formData.amount }
+      payload = {
+        component: formData.component, amount: formData.amount,
+        walletId: formData.walletId, goalId: formData.goalId,
+      }
     }
 
     try {
@@ -303,6 +308,10 @@ export default function Home() {
     if (!formData.amount) return
     if (formType === 'variable' && expenseKind === 'fixed' && !formData.item) {
       setSubmitMsg('Pilih item dulu.')
+      return
+    }
+    if (formType === 'saving' && !formData.walletId) {
+      setSubmitMsg('Pilih dompet dulu.')
       return
     }
     submitData(false)

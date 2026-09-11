@@ -29,27 +29,29 @@ async function handler(req, res) {
       // Progres dihitung dari seluruh periode, bukan periode berjalan.
       // Tabungan itu akumulatif; membatasinya ke satu bulan akan selalu
       // menampilkan progres nyaris nol.
+      //
+      // Dihubungkan lewat goal_id, bukan cocok nama komponen. Nama boleh
+      // beda, progresnya tetap ikut sambungannya.
       const baris = await sql`
         select g.id, g.component, g.target, g.catatan, g.aktif,
                to_char(g.deadline, 'YYYY-MM-DD') as deadline,
                coalesce(s.terkumpul, 0) as terkumpul
         from saving_goals g
         left join (
-          select component, sum(amount)::bigint as terkumpul
+          select goal_id, sum(amount)::bigint as terkumpul
           from savings
-          group by component
-        ) s on s.component = g.component
+          where goal_id is not null
+          group by goal_id
+        ) s on s.goal_id = g.id
         order by g.aktif desc, g.deadline nulls last, g.id
       `
-      // Komponen yang sudah pernah dipakai tapi belum punya target.
-      // Dipakai UI sebagai saran, supaya nama tidak salah ketik dan
-      // riwayat lama langsung terhubung.
+      // Komponen bebas yang belum disambungkan ke target manapun.
+      // Dipakai UI sebagai saran waktu mencatat tabungan tanpa target.
       const bebas = await sql`
-        select distinct s.component
-        from savings s
-        left join saving_goals g on g.component = s.component
-        where g.id is null
-        order by s.component
+        select distinct component
+        from savings
+        where goal_id is null
+        order by component
       `
       return res.json({
         goals: baris.map(keJson),

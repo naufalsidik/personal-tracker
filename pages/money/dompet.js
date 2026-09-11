@@ -70,8 +70,8 @@ export default function Dompet() {
             <h1>Dompet</h1>
             <p className="sub">
               Saldo dihitung dari saldo awal ditambah transaksi setelah tanggal
-              awal, tidak pernah disimpan langsung. Tabungan tidak mengurangi
-              saldo — uangnya masih ada, hanya ditandai jangan dipakai.
+              awal, tidak pernah disimpan langsung. Tabungan ikut memotong
+              saldo dompet asalnya, sama seperti pengeluaran.
             </p>
           </div>
           <div className="aksi">

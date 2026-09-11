@@ -282,11 +282,27 @@ export default function DaftarTransaksi({
                 <BarisSunting key={i} menyimpan={editSaving}
                   onSimpan={() => handleSaveEdit('saving')}
                   onBatal={() => setEditingRow(null)}>
-                  <label className="f tumbuh">
-                    <span>Komponen</span>
-                    <input type="text" value={editForm.component} maxLength={200}
-                      onChange={e => setEditForm({ ...editForm, component: e.target.value })} />
-                  </label>
+                  <div className="f">
+                    <span>Target</span>
+                    <select value={editForm.goalId ?? ''}
+                      onChange={e => setEditForm({ ...editForm, goalId: e.target.value })}>
+                      <option value="">Tanpa target</option>
+                      {(data?.savingGoalsList || []).map(g => (
+                        <option key={g.id} value={g.id}>{g.component}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {!editForm.goalId && (
+                    <label className="f tumbuh">
+                      <span>Komponen</span>
+                      <input type="text" value={editForm.component} maxLength={200}
+                        onChange={e => setEditForm({ ...editForm, component: e.target.value })} />
+                    </label>
+                  )}
+                  <div className="f">
+                    <span>Dompet</span>
+                    <PilihDompet />
+                  </div>
                   <label className="f">
                     <span>Jumlah</span>
                     <input type="number" value={editForm.amount} className="kanan"
@@ -297,11 +313,15 @@ export default function DaftarTransaksi({
                 <Baris key={i}
                   kolom={[
                     { isi: s.component, lebar: 'minmax(0,1fr)' },
+                    { isi: namaDompet(s.walletId), lebar: KOL_DOMPET, redup: true },
                     { isi: rp(s.amount), lebar: KOL_JUMLAH, rata: 'right', num: true, tebal: true },
                   ]}
                   aksi={aksiBaris(s, 'saving', () => {
                     setEditingRow({ ...s, type: 'saving' })
-                    setEditForm({ component: s.component, amount: s.amount })
+                    setEditForm({
+                      component: s.component, amount: s.amount,
+                      walletId: s.walletId ?? '', goalId: s.goalId ?? '',
+                    })
                   })}
                 />
               )

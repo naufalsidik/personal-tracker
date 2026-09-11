@@ -68,10 +68,23 @@ async function handler(req, res) {
                 ${Math.round(Number(data.amount))}, ${walletId})
       `
     } else if (type === 'saving') {
+      const goalIdMentah = parseInt(data.goalId, 10)
+      const goalId = Number.isInteger(goalIdMentah) && goalIdMentah > 0 ? goalIdMentah : null
+
+      // Kalau target dipilih, nama komponen ikut nama target di database,
+      // bukan yang dikirim client. Supaya nama tidak pernah menyimpang dari
+      // target yang sebenarnya dipilih.
+      let component = String(data.component || '').trim()
+      if (goalId) {
+        const goalRows = await sql`select component from saving_goals where id = ${goalId}`
+        if (!goalRows.length) return res.status(400).json({ error: 'Target tidak ditemukan' })
+        component = goalRows[0].component
+      }
+
       await sql`
-        INSERT INTO savings (month, year, component, amount)
-        VALUES (${month}, ${year}, ${data.component.trim()},
-                ${Math.round(Number(data.amount))})
+        INSERT INTO savings (month, year, component, amount, wallet_id, goal_id)
+        VALUES (${month}, ${year}, ${component},
+                ${Math.round(Number(data.amount))}, ${walletId}, ${goalId})
       `
     } else if (type === 'fixed') {
       if (!FIXED_ITEMS.includes(data.item)) {

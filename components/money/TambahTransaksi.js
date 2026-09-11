@@ -140,43 +140,53 @@ export default function TambahTransaksi({
             } />
           )}
 
-          {/* Daftar pilihan datang dari target tabungan yang sudah dibuat.
-              Progres target dihubungkan lewat nama komponen, jadi salah ketik
-              satu huruf memutus riwayatnya. Memilih dari daftar menutup celah
-              itu. Ketik bebas tetap boleh untuk komponen yang belum punya
-              target. */}
+          {/* Dompet dipilih lebih dulu untuk Tabungan karena wajib —
+              tabungan sekarang benar-benar memotong saldo dompet asalnya,
+              bukan cuma penandaan. Untuk tipe lain tetap opsional. */}
+          <Field label="Dompet"
+            bantu={
+              (!data?.wallets || data.wallets.length === 0)
+                ? 'Belum ada dompet. Buat dulu di bagian Dompet agar saldo bisa dihitung.'
+                : formType === 'saving'
+                  ? 'Wajib. Saldo dompet ini akan berkurang sebesar tabungan.'
+                  : undefined
+            }
+            anak={
+              <select value={formData.walletId}
+                onChange={e => setFormData({ ...formData, walletId: e.target.value })}>
+                <option value="">{formType === 'saving' ? 'Pilih dompet…' : 'Tidak ditentukan'}</option>
+                {(data?.wallets || []).map(w => (
+                  <option key={w.id} value={w.id}>{w.nama} · {w.jenis}</option>
+                ))}
+              </select>
+            } />
+
+          {/* Target opsional. Menyambung ke target lewat id (bukan cocok nama
+              teks) supaya salah ketik tidak lagi memutus riwayat progres. */}
           {formType === 'saving' && (
-            <Field label="Komponen"
-              bantu={data?.savingGoals?.length > 0
-                ? 'Pilih dari daftar agar masuk ke target tabungan yang sudah ada.'
-                : undefined}
-              anak={
-                <>
-                  <input type="text" list="komponen-target"
-                    placeholder="Dana Darurat, Saham, Reksa Dana…"
+            <>
+              <Field label="Target"
+                bantu={(data?.savingGoalsList?.length || 0) > 0
+                  ? 'Opsional. Pilih target agar progresnya ikut bertambah.'
+                  : 'Belum ada target. Buat dulu di halaman Target, atau catat tanpa target.'}
+                anak={
+                  <select value={formData.goalId}
+                    onChange={e => setFormData({ ...formData, goalId: e.target.value })}>
+                    <option value="">Tanpa target</option>
+                    {(data?.savingGoalsList || []).map(g => (
+                      <option key={g.id} value={g.id}>{g.component}</option>
+                    ))}
+                  </select>
+                } />
+
+              {!formData.goalId && (
+                <Field label="Komponen" anak={
+                  <input type="text" placeholder="Dana Darurat, Saham, Reksa Dana…"
                     value={formData.component} maxLength={200}
                     onChange={e => setFormData({ ...formData, component: e.target.value })} />
-                  <datalist id="komponen-target">
-                    {(data?.savingGoals || []).map(k => <option key={k} value={k} />)}
-                  </datalist>
-                </>
-              } />
-          )}
-
-          {formType !== 'saving' && (
-            <Field label="Dompet"
-              bantu={(!data?.wallets || data.wallets.length === 0)
-                ? 'Belum ada dompet. Buat dulu di bagian Dompet agar saldo bisa dihitung.'
-                : undefined}
-              anak={
-                <select value={formData.walletId}
-                  onChange={e => setFormData({ ...formData, walletId: e.target.value })}>
-                  <option value="">Tidak ditentukan</option>
-                  {(data?.wallets || []).map(w => (
-                    <option key={w.id} value={w.id}>{w.nama} · {w.jenis}</option>
-                  ))}
-                </select>
-              } />
+                } />
+              )}
+            </>
           )}
 
           <Field label="Jumlah" bantu="Rupiah penuh, tanpa titik" anak={

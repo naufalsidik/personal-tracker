@@ -110,8 +110,8 @@ async function handler(req, res) {
         SET tanggal = ${iso},
             description = ${data.description.trim()},
             category = ${data.category},
-            amount = ${Math.round(Number(data.amount))}
-			wallet_id = ${walletId}
+            amount = ${Math.round(Number(data.amount))},
+            wallet_id = ${walletId}
         WHERE id = ${id} AND month = ${month} AND year = ${year}
         RETURNING id
       `
@@ -122,24 +122,38 @@ async function handler(req, res) {
         UPDATE incomes
         SET tanggal = ${iso},
             description = ${data.description.trim()},
-            amount = ${Math.round(Number(data.amount))}
-			wallet_id = ${walletId}
+            amount = ${Math.round(Number(data.amount))},
+            wallet_id = ${walletId}
         WHERE id = ${id} AND month = ${month} AND year = ${year}
         RETURNING id
       `
     } else if (type === 'saving') {
+      const goalIdMentah = parseInt(data.goalId, 10)
+      const goalId = Number.isInteger(goalIdMentah) && goalIdMentah > 0 ? goalIdMentah : null
+
+      // Sama seperti waktu ditambahkan: kalau target dipilih, nama komponen
+      // ikut nama target itu, bukan yang dikirim client.
+      let component = String(data.component || '').trim()
+      if (goalId) {
+        const goalRows = await sql`select component from saving_goals where id = ${goalId}`
+        if (!goalRows.length) return res.status(400).json({ error: 'Target tidak ditemukan' })
+        component = goalRows[0].component
+      }
+
       result = await sql`
         UPDATE savings
-        SET component = ${data.component.trim()},
-            amount = ${Math.round(Number(data.amount))}
+        SET component = ${component},
+            amount = ${Math.round(Number(data.amount))},
+            wallet_id = ${walletId},
+            goal_id = ${goalId}
         WHERE id = ${id} AND month = ${month} AND year = ${year}
         RETURNING id
       `
     } else if (type === 'fixed') {
       result = await sql`
         UPDATE fixed_costs
-        SET amount = ${Math.round(Number(data.amount))}
-			wallet_id = ${walletId}
+        SET amount = ${Math.round(Number(data.amount))},
+            wallet_id = ${walletId}
         WHERE id = ${id} AND month = ${month} AND year = ${year}
         RETURNING id
       `

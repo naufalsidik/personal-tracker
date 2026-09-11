@@ -69,7 +69,7 @@ async function handler(req, res) {
         WHERE month = ${month} AND year = ${year}
       `,
       sql`
-        SELECT id, component, amount
+        SELECT id, component, amount, wallet_id, goal_id
         FROM savings
         WHERE month = ${month} AND year = ${year}
         ORDER BY id ASC
@@ -99,6 +99,8 @@ async function handler(req, res) {
       rowNum: Number(r.id),
       component: r.component,
       amount: toNumber(r.amount),
+      walletId: r.wallet_id === null ? null : Number(r.wallet_id),
+      goalId: r.goal_id === null ? null : Number(r.goal_id),
     }))
 
     const totalIncome = income.reduce((s, i) => s + i.amount, 0)
@@ -179,15 +181,14 @@ async function handler(req, res) {
       categoryBreakdown[t.category] = (categoryBreakdown[t.category] || 0) + t.amount
     })
 
-    // Nama komponen yang punya target. Dikirim bersama data periode supaya
-    // form tambah tabungan bisa menawarkannya sebagai pilihan — tanpa
+    // Target tabungan aktif. Dikirim bersama data periode supaya form
+    // tambah tabungan bisa menawarkan dropdown pilihan target tanpa
     // permintaan jaringan tambahan.
-    // Nama komponen yang punya target. Dikirim bersama data periode supaya
-    // form tambah tabungan bisa menawarkannya sebagai pilihan.
     const goalRows = await sql`
-      select component from saving_goals where aktif = true order by component
+      select id, component from saving_goals where aktif = true order by component
     `
     const savingGoals = goalRows.map(r => r.component)
+    const savingGoalsList = goalRows.map(r => ({ id: Number(r.id), component: r.component }))
 
     // Dompet aktif dikirim bersama data periode supaya form tambah
     // transaksi bisa menawarkannya tanpa permintaan jaringan terpisah.
@@ -207,6 +208,7 @@ async function handler(req, res) {
       fixedCost,
       saving,
 	  savingGoals,
+	  savingGoalsList,
 	  wallets,
       rekap,
       summary: {

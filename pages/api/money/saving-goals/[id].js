@@ -17,15 +17,15 @@ async function handler(req, res) {
       const lama = await sql`select component from saving_goals where id = ${id}`
       if (!lama.length) return res.status(404).json({ error: 'Tidak ditemukan' })
 
-      // Nama diganti: baris savings ikut diperbarui. Kalau tidak, riwayat
-      // tabungan yang sudah tercatat kehilangan hubungannya dengan target
-      // dan progres tiba-tiba jatuh ke nol.
+      // Nama diganti: baris savings yang tersambung lewat goal_id ikut
+      // diperbarui namanya. Progresnya sendiri tidak terpengaruh, karena
+      // itu dihitung dari goal_id, bukan dari nama.
       if (lama[0].component !== nama) {
         const bentrok = await sql`
           select id from saving_goals where lower(component) = lower(${nama}) and id <> ${id}
         `
         if (bentrok.length) return res.status(400).json({ error: 'Nama target sudah dipakai' })
-        await sql`update savings set component = ${nama} where component = ${lama[0].component}`
+        await sql`update savings set component = ${nama} where goal_id = ${id}`
       }
 
       const baris = await sql`
@@ -41,7 +41,7 @@ async function handler(req, res) {
                   to_char(deadline, 'YYYY-MM-DD') as deadline
       `
       const [s] = await sql`
-        select coalesce(sum(amount), 0)::bigint as terkumpul from savings where component = ${nama}
+        select coalesce(sum(amount), 0)::bigint as terkumpul from savings where goal_id = ${id}
       `
       return res.json({
         id: Number(baris[0].id),
