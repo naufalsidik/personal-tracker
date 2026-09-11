@@ -30,8 +30,13 @@ function validasi(d) {
 async function handler(req, res) {
   try {
     if (req.method === 'GET') {
+      // to_char dipakai supaya tanggal_awal keluar sebagai string 'YYYY-MM-DD',
+      // bukan objek Date yang bergeser timezone. Pola yang sama dipakai
+      // semua endpoint lain yang mengembalikan kolom tanggal.
       const baris = await sql`
-        select * from wallet_balances
+        select id, nama, jenis, saldo_awal, to_char(tanggal_awal, 'YYYY-MM-DD') as tanggal_awal,
+               aktif, urutan, catatan, saldo
+        from wallet_balances
         order by aktif desc, urutan, nama
       `
       const transfer = await sql`
@@ -77,7 +82,11 @@ async function handler(req, res) {
         )
         returning id
       `
-      const [w] = await sql`select * from wallet_balances where id = ${baris[0].id}`
+      const [w] = await sql`
+        select id, nama, jenis, saldo_awal, to_char(tanggal_awal, 'YYYY-MM-DD') as tanggal_awal,
+               aktif, urutan, catatan, saldo
+        from wallet_balances where id = ${baris[0].id}
+      `
       return res.status(201).json(keJson(w))
     }
 

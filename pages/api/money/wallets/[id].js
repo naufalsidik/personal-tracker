@@ -34,7 +34,13 @@ async function handler(req, res) {
         returning id
       `
       if (!baris.length) return res.status(404).json({ error: 'Tidak ditemukan' })
-      const [w] = await sql`select * from wallet_balances where id = ${id}`
+      // to_char dipakai supaya tanggal_awal keluar sebagai string 'YYYY-MM-DD',
+      // bukan objek Date yang bergeser timezone.
+      const [w] = await sql`
+        select id, nama, jenis, saldo_awal, to_char(tanggal_awal, 'YYYY-MM-DD') as tanggal_awal,
+               aktif, urutan, catatan, saldo
+        from wallet_balances where id = ${id}
+      `
       return res.json({
         id: Number(w.id), nama: w.nama, jenis: w.jenis,
         saldoAwal: toNumber(w.saldo_awal), saldo: toNumber(w.saldo),
