@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Shell from '../../components/Shell'
+import { api } from '../../lib/api-client'
+import { JENIS_LAMARAN as JENIS, TEMPAT_LAMARAN as TEMPAT, STATUS_LAMARAN as STATUS } from '../../lib/constants'
+import { SELESAI, hariSejak, sisaHari, perluAksi } from '../../lib/jobs-client'
 
-const JENIS = ['MT', 'Magang', 'Tetap', 'Kontrak', 'Freelance']
-const TEMPAT = ['WFO', 'WFH', 'Hybrid']
-const STATUS = ['Progress', 'Applied', 'Screening', 'Interview', 'Offer', 'Rejected', 'Ghosted']
-const SELESAI = ['Rejected', 'Ghosted', 'Offer']
 const DIRESPONS = ['Screening', 'Interview', 'Offer', 'Rejected']
 const SKALA_MIN = 21
 
@@ -14,33 +13,10 @@ const KOSONG = {
   referensi: '', url: '', gaji: '', catatan: '',
 }
 
-function hariSejak(d) {
-  if (!d) return null
-  const t = new Date(d + 'T00:00:00')
-  return isNaN(t) ? null : Math.floor((Date.now() - t) / 864e5)
-}
-
 function fmt(d) {
   if (!d) return '—'
   const t = new Date(d + 'T00:00:00')
   return isNaN(t) ? d : t.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-}
-
-async function api(path, opsi) {
-  const r = await fetch(path, opsi)
-  if (!r.ok) {
-    const e = await r.json().catch(() => ({}))
-    const err = new Error(e.error || 'Gagal menyimpan')
-    err.status = r.status
-    throw err
-  }
-  return r.json()
-}
-
-// Sisa hari menuju deadline. Negatif berarti sudah lewat.
-function sisaHari(d) {
-  const h = hariSejak(d)
-  return h === null ? null : -h
 }
 
 // Garis tunggu punya dua arti tergantung status.
@@ -110,14 +86,6 @@ function labelSisa(d) {
   if (s < 0) return `lewat ${Math.abs(s)} hari`
   if (s === 0) return 'hari ini'
   return `sisa ${s} hari`
-}
-
-const perluAksi = a => {
-  if (SELESAI.includes(a.status)) return false
-  if (a.status === 'Progress') return true
-  const sisa = a.deadline ? sisaHari(a.deadline) : null
-  if (sisa !== null && sisa >= 0 && sisa <= 7) return true
-  return (hariSejak(a.tanggalApply) ?? 0) >= 15
 }
 
 const IkonUbah = () => (

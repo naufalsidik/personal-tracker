@@ -1,7 +1,6 @@
 import { withAuth } from '../../../../lib/auth'
 import { sql, toNumber } from '../../../../lib/db'
-
-export const JENIS_DOMPET = ['Rekening', 'E-Wallet', 'Cash', 'Investasi', 'Lainnya']
+import { JENIS_DOMPET } from '../../../../lib/constants'
 
 const keJson = r => ({
   id: Number(r.id),

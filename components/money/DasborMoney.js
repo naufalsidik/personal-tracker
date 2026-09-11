@@ -2,7 +2,9 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   LineChart, Line, CartesianGrid, Legend, Cell,
 } from 'recharts'
-import { Kartu, JudulSection, Baris, Metrik, Pil } from '../ui'
+import { Kartu, JudulSection, Baris, Metrik } from '../ui'
+import PilKategori from './PilKategori'
+import { KOL_TANGGAL, KOL_KATEGORI, KOL_JUMLAH, KOL_PERSEN } from './kolom'
 
 // Tab Dashboard, dikeluarkan dari pages/money/index.js.
 //
@@ -17,34 +19,10 @@ import { Kartu, JudulSection, Baris, Metrik, Pil } from '../ui'
 // - Fixed cost dan transaksi terbaru pakai Baris dengan lebar kolom yang sama
 //   seperti di tab Transaksi.
 
-const KOL_TANGGAL = '104px'
-const KOL_KATEGORI = '132px'
-const KOL_JUMLAH = '176px'
-const KOL_PERSEN = '92px'
-
 const RAMPA = [
   'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)',
   'var(--chart-4)', 'var(--chart-5)',
 ]
-
-function PilKategori({ nama, warna }) {
-  if (!warna) return <Pil nada="netral" anak={nama} />
-  return (
-    <span className="pil" style={{ background: warna + '22', color: warna }}>
-      {nama}
-      <style jsx>{`
-        .pil {
-          display: inline-flex; align-items: center;
-          padding: 3px var(--space-3);
-          border-radius: var(--radius-full);
-          font-size: var(--text-sm);
-          font-weight: 600;
-          white-space: nowrap;
-        }
-      `}</style>
-    </span>
-  )
-}
 
 export default function DasborMoney({
   data,

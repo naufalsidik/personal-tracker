@@ -1,7 +1,7 @@
 import { withAuth } from '../../../../lib/auth'
 import { sql, toNumber } from '../../../../lib/db'
 import { isValidId } from '../../../../lib/validation'
-import { JENIS_DOMPET } from './index'
+import { JENIS_DOMPET } from '../../../../lib/constants'
 
 async function handler(req, res) {
   const id = parseInt(req.query.id, 10)

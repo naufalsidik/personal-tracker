@@ -1,16 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import Shell from '../../components/Shell'
 import MoneyNav from '../../components/MoneyNav'
+import { rp, fmtTanggal } from '../../lib/format'
+import { api } from '../../lib/api-client'
 
 const KOSONG = { component: '', target: '', deadline: '', catatan: '', aktif: true }
-
-const rp = n => 'Rp' + Number(n || 0).toLocaleString('id-ID')
-
-const fmtTanggal = d => {
-  if (!d) return null
-  const t = new Date(d + 'T00:00:00')
-  return isNaN(t) ? d : t.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-}
 
 // Berapa bulan lagi sampai deadline. Dibulatkan ke atas supaya sisa
 // setengah bulan tetap dihitung satu, bukan nol.
@@ -21,15 +15,6 @@ function bulanTersisa(deadline) {
   const hari = Math.ceil((t - Date.now()) / 864e5)
   if (hari <= 0) return 0
   return Math.max(1, Math.ceil(hari / 30))
-}
-
-async function api(path, opsi) {
-  const r = await fetch(path, opsi)
-  if (!r.ok) {
-    const e = await r.json().catch(() => ({}))
-    throw new Error(e.error || 'Gagal menyimpan')
-  }
-  return r.json()
 }
 
 export default function Target() {

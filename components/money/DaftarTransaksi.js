@@ -1,4 +1,6 @@
-import { Kartu, JudulSection, Baris, Tombol, Pil } from '../ui'
+import { Kartu, JudulSection, Baris, Tombol } from '../ui'
+import PilKategori from './PilKategori'
+import { KOL_TANGGAL, KOL_DOMPET, KOL_KATEGORI, KOL_JUMLAH, KOL_PERSEN } from './kolom'
 
 // Tab Transaksi, dikeluarkan dari pages/money/index.js.
 //
@@ -8,35 +10,6 @@ import { Kartu, JudulSection, Baris, Tombol, Pil } from '../ui'
 //
 // Seluruh logika edit, hapus, dan simpan tetap milik halaman induk dan
 // dioper lewat props. Komponen ini tidak menyentuh data.
-
-const KOL_TANGGAL = '104px'
-const KOL_DOMPET = '150px'
-const KOL_KATEGORI = '132px'
-const KOL_JUMLAH = '176px'
-const KOL_PERSEN = '92px'
-
-// Pil kategori mempertahankan perilaku lama: warna diambil dari
-// CATEGORY_COLORS lalu diberi akhiran '22' sebagai alfa. Itu berarti nilainya
-// harus hex, bukan var(). Kalau nanti CATEGORY_COLORS pindah ke token,
-// bagian ini ikut berubah.
-function PilKategori({ nama, warna }) {
-  if (!warna) return <Pil nada="netral" anak={nama} />
-  return (
-    <span className="pil" style={{ background: warna + '22', color: warna }}>
-      {nama}
-      <style jsx>{`
-        .pil {
-          display: inline-flex; align-items: center;
-          padding: 3px var(--space-3);
-          border-radius: var(--radius-full);
-          font-size: var(--text-sm);
-          font-weight: 600;
-          white-space: nowrap;
-        }
-      `}</style>
-    </span>
-  )
-}
 
 function Kosong({ pesan }) {
   return (

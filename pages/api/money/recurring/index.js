@@ -1,25 +1,6 @@
 import { withAuth } from '../../../../lib/auth'
-import { sql, toNumber } from '../../../../lib/db'
-import { validateRecurring } from '../../../../lib/recurring'
-
-const keJson = r => ({
-  id: Number(r.id),
-  jenis: r.jenis,
-  description: r.description,
-  item: r.item,
-  category: r.category,
-  amount: toNumber(r.amount),
-  hari: Number(r.hari),
-  walletId: r.wallet_id === null ? null : Number(r.wallet_id),
-  aktif: r.aktif,
-})
-
-// Dompet boleh kosong. Nilai yang tidak masuk akal jadi null, bukan ditolak,
-// supaya template tetap tersimpan meski dompetnya belum ditentukan.
-const bersihkanWallet = v => {
-  const n = parseInt(v, 10)
-  return Number.isInteger(n) && n > 0 ? n : null
-}
+import { sql } from '../../../../lib/db'
+import { validateRecurring, keJsonRecurring as keJson, bersihkanWalletId as bersihkanWallet } from '../../../../lib/recurring'
 
 async function handler(req, res) {
   try {

@@ -2,27 +2,12 @@ import { useState, useEffect, useCallback } from 'react'
 import Shell from '../../components/Shell'
 import MoneyNav from '../../components/MoneyNav'
 import { Kartu, JudulSection, Baris } from '../../components/ui'
+import { rp, fmtTanggal as fmt } from '../../lib/format'
+import { api } from '../../lib/api-client'
 
 const KOSONG = {
   tanggal: new Date().toISOString().slice(0, 10),
   dariId: '', keId: '', amount: '', fee: '', catatan: '',
-}
-
-const rp = n => 'Rp' + Number(n || 0).toLocaleString('id-ID')
-
-const fmt = d => {
-  if (!d) return '—'
-  const t = new Date(d + 'T00:00:00')
-  return isNaN(t) ? d : t.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-}
-
-async function api(path, opsi) {
-  const r = await fetch(path, opsi)
-  if (!r.ok) {
-    const e = await r.json().catch(() => ({}))
-    throw new Error(e.error || 'Gagal menyimpan')
-  }
-  return r.json()
 }
 
 export default function Transfer() {

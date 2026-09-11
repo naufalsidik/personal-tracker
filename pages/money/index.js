@@ -6,13 +6,12 @@ import {
 import Shell from '../../components/Shell'
 import { IkonMata, IkonMataTutup, IkonUnduh } from '../../components/icons'
 import { VAR_CATEGORIES, CATEGORY_COLORS } from '../../lib/constants'
+import { FIXED_ITEMS } from '../../lib/validation'
 import MoneyNav from '../../components/MoneyNav'
 import { useRouter } from 'next/router'
 import DaftarTransaksi from '../../components/money/DaftarTransaksi'
 import DasborMoney from '../../components/money/DasborMoney'
 import TambahTransaksi from '../../components/money/TambahTransaksi'
-
-const FIXED_ITEMS = ['Kosan', 'Internet', 'iCloud', 'Claude', 'Apple Music']
 
 function formatRp(num) {
   if (!num) return 'Rp0'

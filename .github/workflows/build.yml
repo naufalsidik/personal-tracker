@@ -1,0 +1,26 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # Env dummy, cukup buat lewat pengecekan startup (lib/db.js,
+      # lib/session.js). Tidak ada koneksi database sungguhan di CI —
+      # cuma memverifikasi build tidak gagal, bukan menjalankan halaman.
+      - run: npm run build
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost/db
+          SESSION_SECRET: ci-dummy-secret-minimum-32-characters-long
+          AUTH_USERNAME: ci
+          AUTH_PIN: "000000"

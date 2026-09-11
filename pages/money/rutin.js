@@ -4,6 +4,8 @@ import { VAR_CATEGORIES } from '../../lib/constants'
 import { FIXED_ITEMS } from '../../lib/validation'
 import MoneyNav from '../../components/MoneyNav'
 import { Kartu, Baris, Pil } from '../../components/ui'
+import { rp } from '../../lib/format'
+import { api } from '../../lib/api-client'
 
 // Jenis template. Warnanya dulu money-in / money-out / money-plan, tiga warna
 // untuk tiga hal yang setara. Sekarang cuma nada pil, dan pilnya sendiri
@@ -19,8 +21,6 @@ const KOSONG = {
   category: VAR_CATEGORIES[0], amount: '', hari: 20, walletId: '', aktif: true,
 }
 
-const rp = n => 'Rp' + Number(n || 0).toLocaleString('id-ID')
-
 const labelJenis = j => JENIS.find(x => x.id === j)?.label || j
 const nadaJenis = j => JENIS.find(x => x.id === j)?.nada || 'netral'
 
@@ -29,15 +29,6 @@ const nadaJenis = j => JENIS.find(x => x.id === j)?.nada || 'netral'
 // karena angka "5" terasa seperti awal padahal justru menjelang akhir.
 const jelaskanHari = h =>
   h >= 20 ? `tanggal ${h}, awal periode` : `tanggal ${h}, bulan berikutnya`
-
-async function api(path, opsi) {
-  const r = await fetch(path, opsi)
-  if (!r.ok) {
-    const e = await r.json().catch(() => ({}))
-    throw new Error(e.error || 'Gagal menyimpan')
-  }
-  return r.json()
-}
 
 export default function Berulang() {
   const [daftar, setDaftar] = useState(null)

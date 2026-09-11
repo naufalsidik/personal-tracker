@@ -1,18 +1,6 @@
 import { useState, useEffect } from 'react'
 import KartuRingkasan from '../../components/KartuRingkasan'
-
-const SELESAI = ['Rejected', 'Ghosted', 'Offer']
-
-function hariSejak(d) {
-  if (!d) return null
-  const t = new Date(d + 'T00:00:00')
-  return isNaN(t) ? null : Math.floor((Date.now() - t) / 864e5)
-}
-
-// Aturan yang sama dengan halaman /jobs: baru dicatat tapi belum dikirim,
-// atau sudah lewat 15 hari tanpa kabar.
-const perluAksi = a =>
-  a.status === 'Progress' || (!SELESAI.includes(a.status) && (hariSejak(a.tanggalApply) ?? 0) >= 15)
+import { SELESAI, perluAksi } from '../../lib/jobs-client'
 
 export default function RingkasanJobs({ modul }) {
   const [apps, setApps] = useState(null)

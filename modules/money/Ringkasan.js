@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import KartuRingkasan from '../../components/KartuRingkasan'
-
-const rp = n => 'Rp' + Math.round(n).toLocaleString('id-ID')
+import { rp } from '../../lib/format'
 
 export default function RingkasanMoney({ modul }) {
   const [data, setData] = useState(null)

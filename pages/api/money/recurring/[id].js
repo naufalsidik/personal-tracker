@@ -1,24 +1,7 @@
 import { withAuth } from '../../../../lib/auth'
-import { sql, toNumber } from '../../../../lib/db'
-import { validateRecurring } from '../../../../lib/recurring'
+import { sql } from '../../../../lib/db'
+import { validateRecurring, keJsonRecurring as keJson, bersihkanWalletId as bersihkanWallet } from '../../../../lib/recurring'
 import { isValidId } from '../../../../lib/validation'
-
-const keJson = r => ({
-  id: Number(r.id),
-  jenis: r.jenis,
-  description: r.description,
-  item: r.item,
-  category: r.category,
-  amount: toNumber(r.amount),
-  hari: Number(r.hari),
-  walletId: r.wallet_id === null ? null : Number(r.wallet_id),
-  aktif: r.aktif,
-})
-
-const bersihkanWallet = v => {
-  const n = parseInt(v, 10)
-  return Number.isInteger(n) && n > 0 ? n : null
-}
 
 async function handler(req, res) {
   const id = parseInt(req.query.id, 10)
