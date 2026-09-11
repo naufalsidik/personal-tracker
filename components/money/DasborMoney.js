@@ -74,12 +74,16 @@ export default function DasborMoney({
         <section>
           <JudulSection>Breakdown pengeluaran variable</JudulSection>
           <Kartu>
-            <ResponsiveContainer width="100%" height={280}>
+            {/* Tinggi ikut jumlah kategori. Tetap 280px waktu kategorinya
+                sedikit membuat baris terlalu rapat kalau kategorinya banyak,
+                dan Recharts diam-diam menyembunyikan label yang dianggap
+                bakal tumpang tindih (lihat interval={0} di YAxis). */}
+            <ResponsiveContainer width="100%" height={Math.max(280, categoryData.length * 36)}>
               <BarChart data={categoryData} layout="vertical"
                 margin={{ left: 0, right: 110, top: 4, bottom: 4 }}>
                 <XAxis type="number" hide />
                 <YAxis type="category" dataKey="name" width={120}
-                  tickLine={false} axisLine={false}
+                  tickLine={false} axisLine={false} interval={0}
                   tick={{ fontSize: 13, fill: 'var(--ink-2)' }} />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--hover)' }} />
                 <Bar dataKey="value" radius={[0, 6, 6, 0]}
