@@ -2,8 +2,14 @@ import { withAuth } from '../../../lib/auth'
 import { sql } from '../../../lib/db'
 import { getCurrentPeriod, monthIndex, nextPeriod } from '../../../lib/periods'
 
-// Bentuk respons dipertahankan (`{ sheets: [...] }`) supaya frontend
-// tidak perlu diubah. Isinya daftar periode yang bisa dipilih.
+// Daftar SEMUA periode yang punya data, lintas tahun — bukan cuma tahun
+// berjalan. Sebelumnya endpoint ini dibatasi satu tahun sekaligus, jadi
+// begitu tahun berganti, periode tahun lalu (termasuk Desember-nya) hilang
+// dari dropdown dan tidak terjangkau lagi dari UI walau datanya masih ada
+// di database.
+//
+// Bentuk respons berubah dari `sheets: string[]` jadi `sheets: {month,year}[]`
+// supaya periode dengan nama bulan yang sama di tahun berbeda tidak ambigu.
 //
 // Periode berjalan dan periode berikutnya SELALU ikut, meski belum punya
 // data sama sekali. Tanpa itu, tidak ada cara memilih periode kosong untuk
@@ -20,34 +26,34 @@ async function handler(req, res) {
   }
 
   const current = getCurrentPeriod()
-  const year = parseInt(req.query.year, 10) || current.year
 
   try {
     const rows = await sql`
-      SELECT month FROM variable_expenses WHERE year = ${year}
+      SELECT month, year FROM variable_expenses
       UNION
-      SELECT month FROM incomes           WHERE year = ${year}
+      SELECT month, year FROM incomes
       UNION
-      SELECT month FROM fixed_costs       WHERE year = ${year}
+      SELECT month, year FROM fixed_costs
       UNION
-      SELECT month FROM savings           WHERE year = ${year}
+      SELECT month, year FROM savings
     `
 
-    const names = new Set(rows.map(r => r.month))
+    const kunci = (m, y) => `${y}-${m}`
+    const map = new Map(
+      rows.map(r => [kunci(r.month, r.year), { month: r.month, year: Number(r.year) }])
+    )
 
-    if (year === current.year) {
-      names.add(current.month)
+    map.set(kunci(current.month, current.year), { month: current.month, year: current.year })
 
-      // Periode berikutnya ikut ditawarkan supaya bisa diisi lebih awal.
-      // Kalau berikutnya jatuh di tahun depan, dia tidak ditampilkan di
-      // daftar tahun ini — itu benar, bukan kelalaian.
-      const berikut = nextPeriod(current.month, current.year)
-      if (berikut && berikut.year === year) names.add(berikut.month)
-    }
+    // Periode berikutnya ikut ditawarkan supaya bisa diisi lebih awal.
+    const berikut = nextPeriod(current.month, current.year)
+    if (berikut) map.set(kunci(berikut.month, berikut.year), { month: berikut.month, year: berikut.year })
 
-    const sheets = [...names].sort((a, b) => monthIndex(a) - monthIndex(b))
+    const sheets = [...map.values()].sort((a, b) =>
+      a.year - b.year || monthIndex(a.month) - monthIndex(b.month)
+    )
 
-    res.json({ sheets, year })
+    res.json({ sheets, current })
   } catch (err) {
     console.error('[api/sheets-list]', err.message)
     res.status(500).json({ error: 'Gagal mengambil daftar periode' })

@@ -30,7 +30,9 @@ async function api(path, opsi) {
   const r = await fetch(path, opsi)
   if (!r.ok) {
     const e = await r.json().catch(() => ({}))
-    throw new Error(e.error || 'Gagal menyimpan')
+    const err = new Error(e.error || 'Gagal menyimpan')
+    err.status = r.status
+    throw err
   }
   return r.json()
 }
@@ -247,7 +249,24 @@ export default function Jobs() {
       })
       setDraf(null)
       muat()
-    } catch (err) { setGalat(err.message) }
+    } catch (err) {
+      // 409 = sudah pernah melamar ke perusahaan+jabatan yang sama.
+      // Tawarkan simpan sebagai lamaran baru, misalnya melamar ulang
+      // tahun depan, daripada diam-diam dibuang seperti sebelumnya.
+      if (err.status === 409 && confirm(err.message + '. Simpan sebagai lamaran baru?')) {
+        try {
+          await api('/api/jobs' + (id ? '/' + id : ''), {
+            method: id ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...isi, force: true }),
+          })
+          setDraf(null)
+          muat()
+        } catch (err2) { setGalat(err2.message) }
+        return
+      }
+      setGalat(err.message)
+    }
   }
 
   const ubahDraf = (k, v) => setDraf(d => ({ ...d, [k]: v }))

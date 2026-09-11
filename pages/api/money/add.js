@@ -1,6 +1,6 @@
 import { withAuth } from '../../../lib/auth'
 import { sql, toNumber } from '../../../lib/db'
-import { getCurrentPeriod, isValidMonth, parseInputDate } from '../../../lib/periods'
+import { getCurrentPeriod, isValidMonth, parseInputDate, getPeriodBounds } from '../../../lib/periods'
 import {
   validateVariable,
   validateIncome,
@@ -31,6 +31,7 @@ async function handler(req, res) {
   if (!isValidMonth(month)) {
     return res.status(400).json({ error: 'Nama periode tidak valid' })
   }
+  const bounds = getPeriodBounds(month, year)
   // Dompet opsional dan ikut di dalam `data`. Nilai yang bukan bilangan
   // bulat positif dijadikan null, bukan ditolak — kehilangan penanda
   // dompet lebih ringan daripada kehilangan catatan transaksinya.
@@ -52,6 +53,9 @@ async function handler(req, res) {
     if (type === 'variable') {
       const iso = parseInputDate(data.date, month, year)
       if (!iso) return res.status(400).json({ error: 'Format tanggal tidak valid' })
+      if (iso < bounds.start || iso > bounds.end) {
+        return res.status(400).json({ error: `Tanggal harus di antara ${bounds.start} dan ${bounds.end}` })
+      }
 
       await sql`
         INSERT INTO variable_expenses (month, year, tanggal, description, category, amount, wallet_id)
@@ -61,6 +65,9 @@ async function handler(req, res) {
     } else if (type === 'income') {
       const iso = parseInputDate(data.date, month, year)
       if (!iso) return res.status(400).json({ error: 'Format tanggal tidak valid' })
+      if (iso < bounds.start || iso > bounds.end) {
+        return res.status(400).json({ error: `Tanggal harus di antara ${bounds.start} dan ${bounds.end}` })
+      }
 
       await sql`
         INSERT INTO incomes (month, year, tanggal, description, amount, wallet_id)

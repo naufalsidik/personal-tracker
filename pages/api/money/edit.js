@@ -1,6 +1,6 @@
 import { withAuth } from '../../../lib/auth'
 import { sql } from '../../../lib/db'
-import { getCurrentPeriod, isValidMonth, parseInputDate } from '../../../lib/periods'
+import { getCurrentPeriod, isValidMonth, parseInputDate, getPeriodBounds } from '../../../lib/periods'
 import {
   validateVariable,
   validateIncome,
@@ -31,6 +31,7 @@ async function handler(req, res) {
   if (!isValidMonth(month)) {
     return res.status(400).json({ error: 'Nama periode tidak valid' })
   }
+  const bounds = getPeriodBounds(month, year)
 
   const id = Number(rowNum)
   // Dompet opsional. Nilai tak masuk akal jadi null, bukan ditolak,
@@ -105,6 +106,9 @@ async function handler(req, res) {
     if (type === 'variable') {
       const iso = parseInputDate(data.date, month, year)
       if (!iso) return res.status(400).json({ error: 'Format tanggal tidak valid' })
+      if (iso < bounds.start || iso > bounds.end) {
+        return res.status(400).json({ error: `Tanggal harus di antara ${bounds.start} dan ${bounds.end}` })
+      }
       result = await sql`
         UPDATE variable_expenses
         SET tanggal = ${iso},
@@ -118,6 +122,9 @@ async function handler(req, res) {
     } else if (type === 'income') {
       const iso = parseInputDate(data.date, month, year)
       if (!iso) return res.status(400).json({ error: 'Format tanggal tidak valid' })
+      if (iso < bounds.start || iso > bounds.end) {
+        return res.status(400).json({ error: `Tanggal harus di antara ${bounds.start} dan ${bounds.end}` })
+      }
       result = await sql`
         UPDATE incomes
         SET tanggal = ${iso},

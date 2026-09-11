@@ -6,6 +6,7 @@ import {
   getPeriodDates,
   formatDateLabel,
   isValidMonth,
+  hariIniWIB,
 } from '../../../lib/periods'
 import { FIXED_ITEMS } from '../../../lib/validation'
 import { terapkanRecurring } from '../../../lib/recurring'
@@ -30,20 +31,27 @@ async function handler(req, res) {
   }
 
   try {
-    // Pastikan 5 baris fixed cost selalu ada untuk periode ini.
-    // ON CONFLICT DO NOTHING artinya: kalau barisnya sudah ada, lewati.
-    // Tanpa ini, item fixed cost yang belum pernah diisi tidak punya id
-    // sehingga tidak bisa di-edit dari UI.
-    await sql`
-      INSERT INTO fixed_costs (month, year, item, amount)
-      SELECT ${month}, ${year}, t.item, 0
-      FROM unnest(${FIXED_ITEMS}::text[]) AS t(item)
-      ON CONFLICT (month, year, item) DO NOTHING
-    `
-
-    // Setelah baris fixed cost dipastikan ada, isi nilai dari template berulang.
-    // Urutannya penting: template fixed cost mengisi baris, bukan membuatnya.
-    await terapkanRecurring(month, year)
+    // Penyiapan periode (baris fixed cost + penerapan template rutin)
+    // sekarang lewat POST /api/money/periode, dipanggil sebelum endpoint
+    // ini dari halaman Money — supaya GET dengan sheet/year bebas pilih
+    // (termasuk periode masa depan) tidak punya efek tulis.
+    //
+    // Kekecualian: periode BERJALAN (bukan dari query, tapi dari jam
+    // server) tetap disiapkan otomatis di sini. Kartu ringkasan di home
+    // memanggil endpoint ini tanpa lewat halaman Money sama sekali, jadi
+    // tanpa ini periode baru bisa tampil kosong kalau home dibuka duluan.
+    // Ini aman diulang (ON CONFLICT DO NOTHING + recurring_applied) dan
+    // tidak bisa disalahgunakan untuk periode lain karena "current" dihitung
+    // dari jam server, bukan dari input pengguna.
+    if (month === current.month && year === current.year) {
+      await sql`
+        INSERT INTO fixed_costs (month, year, item, amount)
+        SELECT ${month}, ${year}, t.item, 0
+        FROM unnest(${FIXED_ITEMS}::text[]) AS t(item)
+        ON CONFLICT (month, year, item) DO NOTHING
+      `
+      await terapkanRecurring(month, year)
+    }
 
     // to_char dipakai supaya tanggal keluar sebagai string 'YYYY-MM-DD'.
     // Kalau dibiarkan sebagai tipe DATE, driver mengubahnya jadi objek Date
@@ -151,7 +159,7 @@ async function handler(req, res) {
 
     // Rekap berhenti di hari ini. Hari yang belum terjadi tidak ditampilkan
     // supaya grafik tidak jatuh ke nol di sisa periode.
-    const todayIso = new Date().toISOString().slice(0, 10)
+    const todayIso = hariIniWIB()
     const shownDates = allDates.filter(d => d <= todayIso)
 
     let cumulative = 0

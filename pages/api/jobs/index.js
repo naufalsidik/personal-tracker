@@ -43,10 +43,21 @@ async function buat(req, res) {
         return res.status(400).json({ error: 'perusahaan dan jabatan wajib diisi', item })
       }
 
-      const dup = await cariDuplikat(item.perusahaan, item.jabatan)
+      const dup = !item.force ? await cariDuplikat(item.perusahaan, item.jabatan) : null
       if (dup) {
-        hasil.push({ ...dup, _duplicate: true })
-        continue
+        // Bulk (dari Cowork) tetap lanjut supaya satu duplikat tidak
+        // menggagalkan seluruh batch — baris itu ditandai, bukan ditolak.
+        // Satu-satunya (dari form UI) berhenti di sini dan minta
+        // konfirmasi dulu sebelum menyimpan lamaran kedua ke posisi yang
+        // sama, misalnya melamar ulang tahun depan.
+        if (banyak) {
+          hasil.push({ ...dup, _duplicate: true })
+          continue
+        }
+        return res.status(409).json({
+          error: `Sudah pernah melamar ${item.jabatan} di ${item.perusahaan}`,
+          existing: dup,
+        })
       }
 
       const d = bersihkan(item)

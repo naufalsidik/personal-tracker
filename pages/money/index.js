@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import Shell from '../../components/Shell'
 import { IkonMata, IkonMataTutup, IkonUnduh } from '../../components/icons'
-import { MONTHS_ID, VAR_CATEGORIES, CATEGORY_COLORS } from '../../lib/constants'
+import { VAR_CATEGORIES, CATEGORY_COLORS } from '../../lib/constants'
 import MoneyNav from '../../components/MoneyNav'
 import { useRouter } from 'next/router'
 import DaftarTransaksi from '../../components/money/DaftarTransaksi'
@@ -29,14 +29,6 @@ function todayFormatted() {
   const mm = String(d.getMonth() + 1).padStart(2, '0')
   const yyyy = d.getFullYear()
   return `${dd}/${mm}/${yyyy}`
-}
-
-function getCurrentMonthName() {
-  const now = new Date()
-  const day = now.getDate()
-  if (day >= 20) return MONTHS_ID[now.getMonth()]
-  const prevIdx = now.getMonth() - 1
-  return MONTHS_ID[prevIdx < 0 ? 11 : prevIdx]
 }
 
 function CustomTooltip({ active, payload, label }) {
@@ -76,7 +68,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [availableSheets, setAvailableSheets] = useState([])
   const [selectedSheet, setSelectedSheet] = useState('')
-  const [currentMonth] = useState(getCurrentMonthName())
+  const [selectedYear, setSelectedYear] = useState(null)
   const [hideNominal, setHideNominal] = useState(false)
 
   // Load hide preference dari localStorage saat mount
@@ -137,9 +129,9 @@ export default function Home() {
       const res = await fetch('/api/money/edit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', type, rowNum: row.rowNum, sheetName: selectedSheet }),
+        body: JSON.stringify({ action: 'delete', type, rowNum: row.rowNum, sheetName: selectedSheet, year: selectedYear }),
       })
-      if (res.ok) fetchData(selectedSheet)
+      if (res.ok) fetchData(selectedSheet, selectedYear)
       else {
         const err = await res.json()
         alert('Gagal menghapus: ' + (err.error || 'coba lagi'))
@@ -179,9 +171,9 @@ export default function Home() {
       const res = await fetch('/api/money/edit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update', type, rowNum: editingRow.rowNum, sheetName: selectedSheet, data: editForm }),
+        body: JSON.stringify({ action: 'update', type, rowNum: editingRow.rowNum, sheetName: selectedSheet, year: selectedYear, data: editForm }),
       })
-      if (res.ok) { setEditingRow(null); fetchData(selectedSheet) }
+      if (res.ok) { setEditingRow(null); fetchData(selectedSheet, selectedYear) }
       else {
         const err = await res.json()
         alert('Gagal menyimpan: ' + (err.error || 'coba lagi'))
@@ -190,38 +182,57 @@ export default function Home() {
     setEditSaving(false)
   }
 
+  // sheets-list sekarang mengembalikan {month, year} lintas semua tahun
+  // yang punya data, plus current dari server (WIB-aware) — bukan cuma
+  // tebakan tahun berjalan di klien. Dikembalikan utuh (bukan cuma array
+  // sheets) supaya init effect di bawah bisa pakai `current` buat pilihan
+  // default tanpa menghitung ulang "sekarang" di browser.
   const fetchSheets = useCallback(async () => {
     try {
       const res = await fetch('/api/money/sheets-list')
       const json = await res.json()
       setAvailableSheets(json.sheets || [])
-      return json.sheets || []
-    } catch { return [] }
+      return json
+    } catch { return { sheets: [], current: null } }
   }, [])
 
-  const fetchData = useCallback(async (sheet) => {
+  const fetchData = useCallback(async (sheet, year) => {
     setLoading(true)
     try {
-      const url = sheet ? `/api/money/data?sheet=${encodeURIComponent(sheet)}` : '/api/money/data'
+      // Menyiapkan periode (baris fixed cost + template rutin) adalah
+      // penulisan, jadi lewat POST tersendiri, dijalankan sebelum baca.
+      // GET /api/money/data di bawah ini murni baca, aman diulang.
+      if (sheet && year) {
+        await fetch('/api/money/periode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sheet, year }),
+        })
+      }
+
+      const params = new URLSearchParams()
+      if (sheet) params.set('sheet', sheet)
+      if (year) params.set('year', String(year))
+      const url = params.toString() ? `/api/money/data?${params}` : '/api/money/data'
       const res = await fetch(url)
       const json = await res.json()
       setData(json)
       setSelectedSheet(json.sheetName)
+      setSelectedYear(json.year)
     } catch (e) { console.error(e) }
     setLoading(false)
   }, [])
 
   useEffect(() => {
     const init = async () => {
-      const sheets = await fetchSheets()
-      const defaultSheet = sheets.includes(currentMonth)
-        ? currentMonth
-        : sheets[sheets.length - 1]
-      if (defaultSheet) fetchData(defaultSheet)
+      const { sheets, current } = await fetchSheets()
+      const match = current && sheets.find(s => s.month === current.month && s.year === current.year)
+      const target = match || sheets[sheets.length - 1]
+      if (target) fetchData(target.month, target.year)
       else setLoading(false)
     }
     init()
-  }, [fetchSheets, fetchData, currentMonth])
+  }, [fetchSheets, fetchData])
 
   // Submit handler — handle semua tipe termasuk confirm flow untuk fixed
   async function submitData(confirmReplace = false) {
@@ -257,6 +268,7 @@ export default function Home() {
           type: apiType,
           data: payload,
           sheet: selectedSheet,
+          year: selectedYear,
           confirm: confirmReplace,
         }),
       })
@@ -280,7 +292,7 @@ export default function Home() {
       if (res.ok) {
         setSubmitMsg('Berhasil ditambahkan!')
         resetForm()
-        await fetchData(selectedSheet)
+        await fetchData(selectedSheet, selectedYear)
 
         // Untuk fixed cost, balikin ke tab Transaksi biar user lihat hasilnya
         if (apiType === 'fixed') {
@@ -358,21 +370,34 @@ export default function Home() {
               {selectedSheet && (
                 <a
                   className="btn"
-                  href={`/api/money/export.csv?sheet=${encodeURIComponent(selectedSheet)}`}
+                  href={`/api/money/export.csv?sheet=${encodeURIComponent(selectedSheet)}&year=${selectedYear}`}
                   download
                 >
                   <IkonUnduh />
                   Unduh CSV
                 </a>
               )}
- 
+
+              {/* Value select menggabungkan tahun+bulan ("2026-Agustus")
+                  supaya nama bulan yang sama di tahun berbeda tidak ambigu. */}
               <select
                 className="bulan"
-                aria-label="Pilih bulan"
-                value={selectedSheet}
-                onChange={e => { setSelectedSheet(e.target.value); fetchData(e.target.value) }}
+                aria-label="Pilih periode"
+                value={selectedYear ? `${selectedYear}-${selectedSheet}` : ''}
+                onChange={e => {
+                  const idx = e.target.value.indexOf('-')
+                  const year = Number(e.target.value.slice(0, idx))
+                  const month = e.target.value.slice(idx + 1)
+                  setSelectedSheet(month)
+                  setSelectedYear(year)
+                  fetchData(month, year)
+                }}
               >
-                {availableSheets.map(m => <option key={m} value={m}>{m}</option>)}
+                {availableSheets.map(s => (
+                  <option key={`${s.year}-${s.month}`} value={`${s.year}-${s.month}`}>
+                    {s.month} {s.year}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

@@ -69,10 +69,12 @@ async function handler(req, res) {
       `
       if (ada.length) return res.status(400).json({ error: 'Nama target sudah dipakai' })
 
+      const nama = String(d.component).trim()
+
       const baris = await sql`
         insert into saving_goals (component, target, deadline, catatan, aktif)
         values (
-          ${String(d.component).trim()},
+          ${nama},
           ${Math.round(Number(d.target))},
           ${d.deadline || null},
           ${String(d.catatan || '').trim()},
@@ -80,7 +82,20 @@ async function handler(req, res) {
         )
         returning *
       `
-      return res.status(201).json({ ...keJson(baris[0]), terkumpul: 0 })
+
+      // Sambungkan tabungan lama yang komponennya cocok persis tapi belum
+      // punya target manapun. Ini gunanya datalist komponenTersedia: nama
+      // yang sudah pernah dicatat langsung terhubung begitu targetnya dibuat.
+      const [{ terkumpul }] = await sql`
+        with disambung as (
+          update savings set goal_id = ${baris[0].id}
+          where goal_id is null and lower(component) = lower(${nama})
+          returning amount
+        )
+        select coalesce(sum(amount), 0)::bigint as terkumpul from disambung
+      `
+
+      return res.status(201).json({ ...keJson(baris[0]), terkumpul: toNumber(terkumpul) })
     }
 
     res.setHeader('Allow', 'GET, POST')
