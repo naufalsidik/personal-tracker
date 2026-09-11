@@ -191,6 +191,10 @@ export default function DaftarTransaksi({
                   onSimpan={() => handleSaveEdit('fixed')}
                   onBatal={() => setEditingRow(null)}>
                   <span className="nama">{f.item}</span>
+                  <div className="f">
+                    <span>Dompet</span>
+                    <PilihDompet />
+                  </div>
                   <label className="f">
                     <span>Jumlah</span>
                     <input type="number" min="0" value={editForm.amount} className="kanan"
@@ -201,13 +205,14 @@ export default function DaftarTransaksi({
                 <Baris key={i}
                   kolom={[
                     { isi: f.item, lebar: 'minmax(0,1fr)' },
+                    { isi: namaDompet(f.walletId), lebar: KOL_DOMPET, redup: true },
                     { isi: f.percentage, lebar: KOL_PERSEN, rata: 'right', redup: true, num: true },
                     { isi: rp(f.amount), lebar: KOL_JUMLAH, rata: 'right', num: true, tebal: true },
                   ]}
                   aksi={
                     <Tombol varian="halus" anak="Edit" onClick={() => {
                       setEditingRow({ ...f, type: 'fixed' })
-                      setEditForm({ amount: f.amount })
+                      setEditForm({ amount: f.amount, walletId: f.walletId ?? '' })
                     }} />
                   }
                 />
