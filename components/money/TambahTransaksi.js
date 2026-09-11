@@ -161,6 +161,21 @@ export default function TambahTransaksi({
               </select>
             } />
 
+          {/* Tarik pakai nominal negatif — SUM di wallet_balances dan progres
+              target sudah netral terhadap tanda, jadi tidak perlu tipe baru
+              atau ubah query manapun. Tandanya cuma ditentukan di sini. */}
+          {formType === 'saving' && (
+            <Pilihan
+              label="Jenis"
+              nilai={formData.savingJenis || 'nabung'}
+              onPilih={id => setFormData({ ...formData, savingJenis: id })}
+              opsi={[
+                { id: 'nabung', label: 'Nabung' },
+                { id: 'tarik', label: 'Tarik' },
+              ]}
+            />
+          )}
+
           {/* Target opsional. Menyambung ke target lewat id (bukan cocok nama
               teks) supaya salah ketik tidak lagi memutus riwayat progres. */}
           {formType === 'saving' && (

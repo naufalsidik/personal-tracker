@@ -79,6 +79,7 @@ export default function Home() {
     item: '',
 	walletId: '',
 	goalId: '',
+	savingJenis: 'nabung',
   })
   const [submitting, setSubmitting] = useState(false)
   const [submitMsg, setSubmitMsg] = useState('')
@@ -97,6 +98,7 @@ export default function Home() {
       item: '',
       walletId: f.walletId,
       goalId: '',
+      savingJenis: 'nabung',
     }))
   }
 
@@ -226,8 +228,13 @@ export default function Home() {
     } else if (apiType === 'income') {
       payload = { date: formData.date, description: formData.description, amount: formData.amount, walletId: formData.walletId }
     } else if (apiType === 'saving') {
+      // Tarik dikirim sebagai nominal negatif. Input selalu diketik positif
+      // (min="0" di form), tandanya ditentukan di sini dari pilihan Jenis.
+      const jumlah = formData.savingJenis === 'tarik'
+        ? -Math.abs(Number(formData.amount))
+        : Math.abs(Number(formData.amount))
       payload = {
-        component: formData.component, amount: formData.amount,
+        component: formData.component, amount: jumlah,
         walletId: formData.walletId, goalId: formData.goalId,
       }
     }

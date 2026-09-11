@@ -292,7 +292,12 @@ export default function DaftarTransaksi({
                   kolom={[
                     { isi: s.component, lebar: 'minmax(0,1fr)' },
                     { isi: namaDompet(s.walletId), lebar: KOL_DOMPET, redup: true },
-                    { isi: rp(s.amount), lebar: KOL_JUMLAH, rata: 'right', num: true, tebal: true },
+                    {
+                      // Negatif = tarik, bukan setor. Warna menandai arahnya
+                      // sama seperti saldo dompet minus di halaman Dompet.
+                      isi: rp(s.amount), lebar: KOL_JUMLAH, rata: 'right', num: true, tebal: true,
+                      warna: s.amount < 0 ? 'var(--danger)' : undefined,
+                    },
                   ]}
                   aksi={aksiBaris(s, 'saving', () => {
                     setEditingRow({ ...s, type: 'saving' })
