@@ -1,6 +1,7 @@
 import { sql } from '../../../lib/db'
 import { withAuth } from '../../../lib/auth'
 import { KOLOM, keJson } from '../../../lib/jobs'
+import { selCsv } from '../../../lib/csv'
 
 const KOLOM_CSV = [
   'perusahaan', 'lokasi', 'jabatan', 'jenis', 'tempat',
@@ -19,10 +20,9 @@ async function handler(req, res) {
       order by tanggal_apply desc, created_at desc
     `
     const apps = baris.map(keJson)
-    const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`
     const csv = [
       KOLOM_CSV.join(','),
-      ...apps.map(a => KOLOM_CSV.map(c => esc(a[c])).join(',')),
+      ...apps.map(a => KOLOM_CSV.map(c => selCsv(a[c])).join(',')),
     ].join('\n')
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8')

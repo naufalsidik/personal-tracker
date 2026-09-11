@@ -1,6 +1,7 @@
 import { withAuth } from '../../../lib/auth'
 import { sql, toNumber } from '../../../lib/db'
 import { getCurrentPeriod, isValidMonth, getPeriodLabel } from '../../../lib/periods'
+import { selCsv } from '../../../lib/csv'
 
 // Satu berkas CSV berisi seluruh transaksi satu periode: pengeluaran,
 // fixed cost, pemasukan, dan tabungan digabung dengan kolom Jenis sebagai
@@ -8,8 +9,6 @@ import { getCurrentPeriod, isValidMonth, getPeriodLabel } from '../../../lib/per
 // berguna daripada memaksa Anda mengunduh empat berkas terpisah.
 
 const KOLOM = ['Jenis', 'Tanggal', 'Keterangan', 'Kategori', 'Dompet', 'Jumlah']
-
-const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`
 
 async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -66,7 +65,7 @@ async function handler(req, res) {
 
     const csv = [
       KOLOM.join(','),
-      ...baris.map(b => b.map(esc).join(',')),
+      ...baris.map(b => b.map(selCsv).join(',')),
     ].join('\n')
 
     const namaBerkas = `money-${month}-${year}.csv`
